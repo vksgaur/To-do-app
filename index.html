@@ -1,19 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Task Planner with Tags</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Task Planner</title>
     <style>
+        /* CSS Variables for theming */
         :root {
             --bg-color: #f4f4f4;
             --container-bg: #ffffff;
             --text-color: #333;
-            --task-bg: #f9f9f9;
+            --task-bg: #fdfdfd;
             --border-color: #ddd;
             --shadow-color: rgba(0, 0, 0, 0.1);
             --primary-color: #007bff;
+            --primary-color-hover: #0056b3;
             --tag-bg: #e7f3ff;
             --tag-color: #0056b3;
+            --priority-high: #ffadad;
+            --priority-medium: #ffd6a5;
+            --priority-low: #caffbf;
         }
 
         [data-theme="dark"] {
@@ -23,40 +30,79 @@
             --task-bg: #2c2c2c;
             --border-color: #444;
             --shadow-color: rgba(0, 0, 0, 0.4);
+            --primary-color-hover: #3395ff;
             --tag-bg: #003f7f;
             --tag-color: #d1eaff;
+            --priority-high: #5e1a1a;
+            --priority-medium: #614d25;
+            --priority-low: #2a5a2a;
         }
 
+        /* General Body and Layout Styles */
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: 'Segoe UI', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 1rem;
             display: flex;
             justify-content: center;
+            align-items: flex-start;
             min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .container {
             background: var(--container-bg);
-            width: 600px;
+            width: 100%;
+            max-width: 700px;
             padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px var(--shadow-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px var(--shadow-color);
+            transition: background-color 0.3s;
         }
 
+        /* Header with Title and Theme Switcher */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.8rem;
         }
 
+        #theme-toggle {
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-color);
+            padding: 5px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        
+        #theme-toggle:hover {
+            background-color: rgba(128, 128, 128, 0.2);
+        }
+
+        /* Input Area */
         .input-area {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin: 1rem 0;
+            gap: 12px;
+            margin: 1.5rem 0;
         }
 
         .input-row {
@@ -64,41 +110,69 @@
             gap: 10px;
         }
 
+        .input-row-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
         #taskInput,
-        #tagInput {
-            flex-grow: 1;
-            padding: 10px;
+        #tagInput,
+        #dueDateInput,
+        #priorityInput {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
             border: 1px solid var(--border-color);
-            border-radius: 4px;
+            border-radius: 6px;
             background-color: var(--bg-color);
             color: var(--text-color);
+            font-size: 1rem;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .add-btn {
-            padding: 10px 15px;
+            padding: 12px 20px;
             border: none;
             background-color: var(--primary-color);
             color: white;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+        }
+        
+        .add-btn:hover {
+            background-color: var(--primary-color-hover);
+        }
+        
+        .add-btn:active {
+            transform: scale(0.98);
         }
 
-        /* Tag Cloud */
+        /* Tag Cloud for Filtering */
         #tagCloud {
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
             border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .tag-filter {
-            display: inline-block;
-            padding: 5px 10px;
-            margin: 2px;
-            border-radius: 15px;
+            padding: 6px 14px;
+            border-radius: 20px;
             background-color: var(--task-bg);
             border: 1px solid var(--border-color);
             cursor: pointer;
             font-size: 0.9em;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+        
+        .tag-filter:hover {
+            border-color: var(--primary-color);
         }
 
         .tag-filter.active {
@@ -107,57 +181,115 @@
             border-color: var(--primary-color);
         }
 
-        ul {
+        /* Task List */
+        #taskList {
             list-style-type: none;
             padding: 0;
+            margin: 0;
         }
 
         li {
             background: var(--task-bg);
-            padding: 12px 15px;
-            border-bottom: 1px solid var(--border-color);
+            padding: 15px;
+            border-left: 5px solid var(--border-color);
+            margin-bottom: 10px;
+            border-radius: 6px;
             animation: fadeIn 0.5s ease-out;
+            transition: background-color 0.3s;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
+        
+        /* Priority Styling */
+        li.priority-high { border-left-color: var(--priority-high); }
+        li.priority-medium { border-left-color: var(--priority-medium); }
+        li.priority-low { border-left-color: var(--priority-low); }
 
-        .task-main {
+        .task-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .task-main span {
+        .task-text {
             flex-grow: 1;
             cursor: pointer;
+            font-size: 1.1rem;
+        }
+        
+        .task-text.completed {
+            text-decoration: line-through;
+            opacity: 0.6;
         }
 
-        .task-tags {
-            margin-top: 8px;
+        .task-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-left: 10px;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        
+        .task-actions button:hover {
+            background-color: rgba(128, 128, 128, 0.2);
+        }
+
+        .task-details {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+            opacity: 0.8;
         }
 
         .task-tag {
-            display: inline-block;
-            padding: 3px 8px;
-            margin-right: 5px;
+            padding: 4px 10px;
             background-color: var(--tag-bg);
             color: var(--tag-color);
-            border-radius: 10px;
-            font-size: 0.8em;
+            border-radius: 12px;
+        }
+        
+        .due-date {
+            font-style: italic;
+        }
+        
+        /* Edit Mode */
+        .edit-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--primary-color);
+            border-radius: 4px;
+            font-size: 1.1rem;
         }
 
+        /* Empty State */
+        #emptyState {
+            text-align: center;
+            padding: 3rem 1rem;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            margin-top: 2rem;
+        }
+        
+        #emptyState p {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #888;
+        }
+
+        /* Utility */
         .hide {
             display: none;
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -165,107 +297,301 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Task Planner</h1>
+            <h1>My Tasks</h1>
+            <button id="theme-toggle">🌙</button>
         </div>
+        
         <div class="input-area">
             <div class="input-row">
                 <input type="text" id="taskInput" placeholder="Add a new task...">
                 <button class="add-btn">Add</button>
             </div>
-            <input type="text" id="tagInput" placeholder="Add tags, comma separated (e.g., work, home)">
+            <input type="text" id="tagInput" placeholder="Tags, comma separated (e.g., work, home)">
+            <div class="input-row-details">
+                <input type="date" id="dueDateInput" title="Due Date">
+                <select id="priorityInput" title="Priority">
+                    <option value="low">Low Priority</option>
+                    <option value="medium" selected>Medium Priority</option>
+                    <option value="high">High Priority</option>
+                </select>
+            </div>
         </div>
+
         <div id="tagCloud"></div>
+        
         <ul id="taskList"></ul>
+        
+        <div id="emptyState" class="hide">
+            <p>🎉 You're all caught up! Add a task to get started.</p>
+        </div>
     </div>
 
     <script>
-        const taskInput = document.getElementById('taskInput');
-        const tagInput = document.getElementById('tagInput');
-        const addButton = document.querySelector('.add-btn');
-        const taskList = document.getElementById('taskList');
-        const tagCloud = document.getElementById('tagCloud');
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Element References
+            const taskInput = document.getElementById('taskInput');
+            const tagInput = document.getElementById('tagInput');
+            const dueDateInput = document.getElementById('dueDateInput');
+            const priorityInput = document.getElementById('priorityInput');
+            const addButton = document.querySelector('.add-btn');
+            const taskList = document.getElementById('taskList');
+            const tagCloud = document.getElementById('tagCloud');
+            const themeToggle = document.getElementById('theme-toggle');
+            const emptyState = document.getElementById('emptyState');
 
-        let activeTagFilter = null;
+            // Application State
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            let activeTagFilter = null;
 
-        function addTask() {
-            const taskText = taskInput.value.trim();
-            if (taskText === "") return;
+            // --- Core Functions ---
 
-            const tags = tagInput.value.split(',')
-                .map(tag => tag.trim())
-                .filter(tag => tag !== '');
+            /**
+             * Renders all tasks, the tag cloud, and the empty state.
+             * This is the main function to update the entire UI.
+             */
+            const renderApp = () => {
+                // Save state to localStorage
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                
+                renderTaskList();
+                renderTagCloud();
+                checkEmptyState();
+            };
 
-            createTaskElement(taskText, tags);
-            taskInput.value = "";
-            tagInput.value = "";
-            updateApp();
-        }
+            /**
+             * Renders the list of tasks based on the current filter.
+             */
+            const renderTaskList = () => {
+                taskList.innerHTML = '';
+                const filteredTasks = tasks.filter(task => 
+                    activeTagFilter ? task.tags.includes(activeTagFilter) : true
+                );
 
-        function createTaskElement(text, tags = []) {
-            const li = document.createElement('li');
-            li.dataset.tags = tags.join(',');
+                filteredTasks.forEach(task => {
+                    const li = document.createElement('li');
+                    li.dataset.id = task.id;
+                    li.className = `priority-${task.priority}`;
 
-            const tagsHTML = tags.map(tag => `<span class="task-tag">#${tag}</span>`).join('');
+                    const tagsHTML = task.tags.map(tag => `<span class="task-tag">#${tag}</span>`).join('');
+                    const dueDateHTML = task.dueDate ? `<span class="due-date">Due: ${task.dueDate}</span>` : '';
 
-            li.innerHTML = `
-                <div class="task-main">
-                    <span onclick="toggleCompleted(this)">${text}</span>
-                    <button class="delete-btn" onclick="deleteTask(this)">🗑️</button>
-                </div>
-                <div class="task-tags">${tagsHTML}</div>
-            `;
-            taskList.appendChild(li);
-        }
+                    li.innerHTML = `
+                        <div class="task-content">
+                            <span class="task-text ${task.completed ? 'completed' : ''}">${task.text}</span>
+                            <div class="task-actions">
+                                <button class="edit-btn" title="Edit Task">✏️</button>
+                                <button class="delete-btn" title="Delete Task">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="task-details">
+                            ${tagsHTML}
+                            ${dueDateHTML}
+                        </div>
+                    `;
+                    taskList.appendChild(li);
+                });
+            };
+            
+            /**
+             * Renders the filterable tags in the tag cloud.
+             */
+            const renderTagCloud = () => {
+                const allTags = new Set(tasks.flatMap(task => task.tags));
+                tagCloud.innerHTML = '';
 
-        function updateTagCloud() {
-            const allTags = new Set();
-            document.querySelectorAll('#taskList li').forEach(li => {
-                const tags = li.dataset.tags.split(',');
-                if (tags[0] !== '') {
-                    tags.forEach(tag => allTags.add(tag));
+                // Add 'All' filter
+                const allTagEl = document.createElement('span');
+                allTagEl.className = `tag-filter ${activeTagFilter === null ? 'active' : ''}`;
+                allTagEl.textContent = 'All';
+                allTagEl.onclick = () => filterByTag(null);
+                tagCloud.appendChild(allTagEl);
+
+                // Add individual tags
+                allTags.forEach(tag => {
+                    const tagEl = document.createElement('span');
+                    tagEl.className = `tag-filter ${activeTagFilter === tag ? 'active' : ''}`;
+                    tagEl.textContent = `#${tag}`;
+                    tagEl.onclick = () => filterByTag(tag);
+                    tagCloud.appendChild(tagEl);
+                });
+            };
+
+            /**
+             * Shows or hides the empty state message.
+             */
+            const checkEmptyState = () => {
+                if (tasks.length === 0) {
+                    emptyState.classList.remove('hide');
+                    taskList.classList.add('hide');
+                } else {
+                    emptyState.classList.add('hide');
+                    taskList.classList.remove('hide');
+                }
+            };
+
+            // --- Action Handlers ---
+
+            /**
+             * Adds a new task to the list.
+             */
+            const addTask = () => {
+                const taskText = taskInput.value.trim();
+                if (taskText === "") {
+                    alert("Task cannot be empty!");
+                    return;
+                }
+
+                const tags = tagInput.value.split(',')
+                    .map(tag => tag.trim())
+                    .filter(tag => tag !== '');
+
+                const newTask = {
+                    id: Date.now(),
+                    text: taskText,
+                    tags: tags,
+                    dueDate: dueDateInput.value,
+                    priority: priorityInput.value,
+                    completed: false
+                };
+
+                tasks.push(newTask);
+
+                // Clear inputs
+                taskInput.value = "";
+                tagInput.value = "";
+                dueDateInput.value = "";
+                priorityInput.value = "medium";
+                
+                // Focus management
+                taskInput.focus();
+
+                renderApp();
+            };
+            
+            /**
+             * Filters the tasks shown based on a selected tag.
+             * @param {string|null} tag - The tag to filter by, or null to show all.
+             */
+            const filterByTag = (tag) => {
+                activeTagFilter = tag;
+                renderApp();
+            };
+
+            /**
+             * Toggles the completed status of a task.
+             * @param {number} id - The ID of the task to toggle.
+             */
+            const toggleCompleted = (id) => {
+                const task = tasks.find(t => t.id === id);
+                if (task) {
+                    task.completed = !task.completed;
+                    renderApp();
+                }
+            };
+            
+            /**
+             * Deletes a task after confirmation.
+             * @param {number} id - The ID of the task to delete.
+             */
+            const deleteTask = (id) => {
+                if (confirm('Are you sure you want to delete this task?')) {
+                    tasks = tasks.filter(t => t.id !== id);
+                    renderApp();
+                }
+            };
+
+            /**
+             * Puts a task into edit mode.
+             * @param {HTMLElement} li - The list item element of the task.
+             * @param {object} task - The task object.
+             */
+            const enterEditMode = (li, task) => {
+                const taskContent = li.querySelector('.task-content');
+                const originalHTML = taskContent.innerHTML;
+
+                taskContent.innerHTML = `
+                    <input type="text" class="edit-input" value="${task.text}">
+                    <div class="task-actions">
+                        <button class="save-btn" title="Save Changes">✔️</button>
+                    </div>
+                `;
+
+                const editInput = taskContent.querySelector('.edit-input');
+                editInput.focus();
+                
+                const saveBtn = taskContent.querySelector('.save-btn');
+                saveBtn.onclick = () => saveTask(li, task, editInput.value.trim());
+                editInput.onkeypress = (e) => {
+                    if (e.key === 'Enter') saveTask(li, task, editInput.value.trim());
+                    if (e.key === 'Escape') taskContent.innerHTML = originalHTML; // Cancel edit
+                };
+            };
+            
+            /**
+             * Saves the edited task text.
+             * @param {HTMLElement} li - The list item element.
+             * @param {object} task - The task object to update.
+             * @param {string} newText - The new text for the task.
+             */
+            const saveTask = (li, task, newText) => {
+                if (newText) {
+                    task.text = newText;
+                    renderApp();
+                } else {
+                    alert("Task text cannot be empty.");
+                }
+            };
+            
+            // --- Event Listeners ---
+
+            // Add task on button click or Enter key
+            addButton.addEventListener('click', addTask);
+            taskInput.addEventListener('keypress', e => e.key === 'Enter' && addTask());
+
+            // Event Delegation for task list actions (complete, edit, delete)
+            taskList.addEventListener('click', (e) => {
+                const target = e.target;
+                const li = target.closest('li');
+                if (!li) return;
+
+                const taskId = Number(li.dataset.id);
+                const task = tasks.find(t => t.id === taskId);
+
+                if (target.classList.contains('task-text')) {
+                    toggleCompleted(taskId);
+                } else if (target.classList.contains('delete-btn')) {
+                    deleteTask(taskId);
+                } else if (target.classList.contains('edit-btn')) {
+                    enterEditMode(li, task);
                 }
             });
 
-            tagCloud.innerHTML = '<span class="tag-filter active" onclick="filterByTag(this, null)">All</span>';
-            allTags.forEach(tag => {
-                const tagEl = document.createElement('span');
-                tagEl.className = 'tag-filter';
-                tagEl.textContent = `#${tag}`;
-                tagEl.onclick = () => filterByTag(tagEl, tag);
-                tagCloud.appendChild(tagEl);
+            // Theme switcher logic
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                if (currentTheme === 'dark') {
+                    document.documentElement.removeAttribute('data-theme');
+                    themeToggle.textContent = '🌙';
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    themeToggle.textContent = '☀️';
+                    localStorage.setItem('theme', 'dark');
+                }
             });
-        }
+            
+            // --- Initial Load ---
+            
+            // Set initial theme from localStorage
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeToggle.textContent = '☀️';
+            }
 
-        function filterByTag(clickedEl, tag) {
-            activeTagFilter = tag;
-            document.querySelectorAll('.tag-filter').forEach(el => el.classList.remove('active'));
-            clickedEl.classList.add('active');
-            filterTasks();
-        }
-
-        function filterTasks() {
-            document.querySelectorAll('#taskList li').forEach(li => {
-                const tags = li.dataset.tags.split(',');
-                const hasTag = activeTagFilter ? tags.includes(activeTagFilter) : true;
-                li.style.display = hasTag ? '' : 'none';
-            });
-        }
-
-        function deleteTask(buttonElement) {
-            buttonElement.closest('li').remove();
-            updateApp();
-        }
-
-        function updateApp() {
-            updateTagCloud();
-            filterTasks();
-        }
-
-        addButton.addEventListener('click', addTask);
-        taskInput.addEventListener('keypress', e => e.key === 'Enter' && addTask());
-
-        // Initial Load
-        updateApp();
+            // Initial render of the application
+            renderApp();
+        });
     </script>
 </body>
 
