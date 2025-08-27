@@ -16,6 +16,8 @@
             --shadow-color: rgba(0, 0, 0, 0.1);
             --primary-color: #007bff;
             --primary-color-hover: #0056b3;
+            --secondary-btn-bg: #6c757d;
+            --secondary-btn-hover: #5a6268;
             --tag-bg: #e7f3ff;
             --tag-color: #0056b3;
             --priority-high: #ffadad;
@@ -31,6 +33,8 @@
             --border-color: #444;
             --shadow-color: rgba(0, 0, 0, 0.4);
             --primary-color-hover: #3395ff;
+            --secondary-btn-bg: #495057;
+            --secondary-btn-hover: #5c636a;
             --tag-bg: #003f7f;
             --tag-color: #d1eaff;
             --priority-high: #5e1a1a;
@@ -195,13 +199,12 @@
             margin-bottom: 10px;
             border-radius: 6px;
             animation: fadeIn 0.5s ease-out;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, border-left-color 0.3s;
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
         
-        /* Priority Styling */
         li.priority-high { border-left-color: var(--priority-high); }
         li.priority-medium { border-left-color: var(--priority-medium); }
         li.priority-low { border-left-color: var(--priority-low); }
@@ -258,13 +261,48 @@
             font-style: italic;
         }
         
-        /* Edit Mode */
-        .edit-input {
+        /* Edit Mode Styling */
+        .edit-mode-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
             width: 100%;
-            padding: 8px;
+        }
+        .edit-input, .edit-tags-input, .edit-priority-select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
             border: 1px solid var(--primary-color);
-            border-radius: 4px;
-            font-size: 1.1rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        .edit-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .edit-actions button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .save-btn {
+            background-color: var(--primary-color);
+        }
+        .save-btn:hover {
+            background-color: var(--primary-color-hover);
+        }
+        .cancel-btn {
+            background-color: var(--secondary-btn-bg);
+        }
+        .cancel-btn:hover {
+            background-color: var(--secondary-btn-hover);
         }
 
         /* Empty State */
@@ -345,22 +383,13 @@
 
             // --- Core Functions ---
 
-            /**
-             * Renders all tasks, the tag cloud, and the empty state.
-             * This is the main function to update the entire UI.
-             */
             const renderApp = () => {
-                // Save state to localStorage
                 localStorage.setItem('tasks', JSON.stringify(tasks));
-                
                 renderTaskList();
                 renderTagCloud();
                 checkEmptyState();
             };
 
-            /**
-             * Renders the list of tasks based on the current filter.
-             */
             const renderTaskList = () => {
                 taskList.innerHTML = '';
                 const filteredTasks = tasks.filter(task => 
@@ -392,21 +421,14 @@
                 });
             };
             
-            /**
-             * Renders the filterable tags in the tag cloud.
-             */
             const renderTagCloud = () => {
                 const allTags = new Set(tasks.flatMap(task => task.tags));
                 tagCloud.innerHTML = '';
-
-                // Add 'All' filter
                 const allTagEl = document.createElement('span');
                 allTagEl.className = `tag-filter ${activeTagFilter === null ? 'active' : ''}`;
                 allTagEl.textContent = 'All';
                 allTagEl.onclick = () => filterByTag(null);
                 tagCloud.appendChild(allTagEl);
-
-                // Add individual tags
                 allTags.forEach(tag => {
                     const tagEl = document.createElement('span');
                     tagEl.className = `tag-filter ${activeTagFilter === tag ? 'active' : ''}`;
@@ -416,71 +438,41 @@
                 });
             };
 
-            /**
-             * Shows or hides the empty state message.
-             */
             const checkEmptyState = () => {
-                if (tasks.length === 0) {
-                    emptyState.classList.remove('hide');
-                    taskList.classList.add('hide');
-                } else {
-                    emptyState.classList.add('hide');
-                    taskList.classList.remove('hide');
-                }
+                emptyState.classList.toggle('hide', tasks.length > 0);
+                taskList.classList.toggle('hide', tasks.length === 0);
             };
 
             // --- Action Handlers ---
 
-            /**
-             * Adds a new task to the list.
-             */
             const addTask = () => {
                 const taskText = taskInput.value.trim();
                 if (taskText === "") {
                     alert("Task cannot be empty!");
                     return;
                 }
-
-                const tags = tagInput.value.split(',')
-                    .map(tag => tag.trim())
-                    .filter(tag => tag !== '');
-
-                const newTask = {
+                const tags = tagInput.value.split(',').map(tag => tag.trim()).filter(Boolean);
+                tasks.push({
                     id: Date.now(),
                     text: taskText,
                     tags: tags,
                     dueDate: dueDateInput.value,
                     priority: priorityInput.value,
                     completed: false
-                };
-
-                tasks.push(newTask);
-
-                // Clear inputs
+                });
                 taskInput.value = "";
                 tagInput.value = "";
                 dueDateInput.value = "";
                 priorityInput.value = "medium";
-                
-                // Focus management
                 taskInput.focus();
-
                 renderApp();
             };
             
-            /**
-             * Filters the tasks shown based on a selected tag.
-             * @param {string|null} tag - The tag to filter by, or null to show all.
-             */
             const filterByTag = (tag) => {
                 activeTagFilter = tag;
                 renderApp();
             };
 
-            /**
-             * Toggles the completed status of a task.
-             * @param {number} id - The ID of the task to toggle.
-             */
             const toggleCompleted = (id) => {
                 const task = tasks.find(t => t.id === id);
                 if (task) {
@@ -489,10 +481,6 @@
                 }
             };
             
-            /**
-             * Deletes a task after confirmation.
-             * @param {number} id - The ID of the task to delete.
-             */
             const deleteTask = (id) => {
                 if (confirm('Are you sure you want to delete this task?')) {
                     tasks = tasks.filter(t => t.id !== id);
@@ -501,41 +489,57 @@
             };
 
             /**
-             * Puts a task into edit mode.
+             * Puts a task into a full edit mode with fields for text, tags, and priority.
              * @param {HTMLElement} li - The list item element of the task.
              * @param {object} task - The task object.
              */
             const enterEditMode = (li, task) => {
-                const taskContent = li.querySelector('.task-content');
-                const originalHTML = taskContent.innerHTML;
-
-                taskContent.innerHTML = `
-                    <input type="text" class="edit-input" value="${task.text}">
-                    <div class="task-actions">
-                        <button class="save-btn" title="Save Changes">✔️</button>
+                li.innerHTML = `
+                    <div class="edit-mode-container">
+                        <input type="text" class="edit-input" value="${task.text}" placeholder="Task description">
+                        <input type="text" class="edit-tags-input" value="${task.tags.join(', ')}" placeholder="Tags, comma separated">
+                        <select class="edit-priority-select">
+                            <option value="low" ${task.priority === 'low' ? 'selected' : ''}>Low Priority</option>
+                            <option value="medium" ${task.priority === 'medium' ? 'selected' : ''}>Medium Priority</option>
+                            <option value="high" ${task.priority === 'high' ? 'selected' : ''}>High Priority</option>
+                        </select>
+                        <div class="edit-actions">
+                            <button class="cancel-btn">Cancel</button>
+                            <button class="save-btn">Save</button>
+                        </div>
                     </div>
                 `;
 
-                const editInput = taskContent.querySelector('.edit-input');
+                const editInput = li.querySelector('.edit-input');
+                const editTagsInput = li.querySelector('.edit-tags-input');
+                const editPrioritySelect = li.querySelector('.edit-priority-select');
+                const saveBtn = li.querySelector('.save-btn');
+                const cancelBtn = li.querySelector('.cancel-btn');
+
                 editInput.focus();
                 
-                const saveBtn = taskContent.querySelector('.save-btn');
-                saveBtn.onclick = () => saveTask(li, task, editInput.value.trim());
-                editInput.onkeypress = (e) => {
-                    if (e.key === 'Enter') saveTask(li, task, editInput.value.trim());
-                    if (e.key === 'Escape') taskContent.innerHTML = originalHTML; // Cancel edit
+                saveBtn.onclick = () => {
+                    const newText = editInput.value.trim();
+                    const newTags = editTagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
+                    const newPriority = editPrioritySelect.value;
+                    saveTask(task, newText, newTags, newPriority);
                 };
+                
+                cancelBtn.onclick = () => renderApp(); // Simply re-render to cancel
             };
             
             /**
-             * Saves the edited task text.
-             * @param {HTMLElement} li - The list item element.
+             * Saves the updated task details.
              * @param {object} task - The task object to update.
              * @param {string} newText - The new text for the task.
+             * @param {string[]} newTags - The new array of tags.
+             * @param {string} newPriority - The new priority level.
              */
-            const saveTask = (li, task, newText) => {
+            const saveTask = (task, newText, newTags, newPriority) => {
                 if (newText) {
                     task.text = newText;
+                    task.tags = newTags;
+                    task.priority = newPriority;
                     renderApp();
                 } else {
                     alert("Task text cannot be empty.");
@@ -544,11 +548,9 @@
             
             // --- Event Listeners ---
 
-            // Add task on button click or Enter key
             addButton.addEventListener('click', addTask);
             taskInput.addEventListener('keypress', e => e.key === 'Enter' && addTask());
 
-            // Event Delegation for task list actions (complete, edit, delete)
             taskList.addEventListener('click', (e) => {
                 const target = e.target;
                 const li = target.closest('li');
@@ -566,30 +568,20 @@
                 }
             });
 
-            // Theme switcher logic
             themeToggle.addEventListener('click', () => {
-                const currentTheme = document.documentElement.getAttribute('data-theme');
-                if (currentTheme === 'dark') {
-                    document.documentElement.removeAttribute('data-theme');
-                    themeToggle.textContent = '🌙';
-                    localStorage.setItem('theme', 'light');
-                } else {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                    themeToggle.textContent = '☀️';
-                    localStorage.setItem('theme', 'dark');
-                }
+                const isDark = document.documentElement.toggleAttribute('data-theme');
+                themeToggle.textContent = isDark ? '☀️' : '🌙';
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
             });
             
             // --- Initial Load ---
             
-            // Set initial theme from localStorage
-            const savedTheme = localStorage.getItem('theme') || 'light';
+            const savedTheme = localStorage.getItem('theme');
             if (savedTheme === 'dark') {
                 document.documentElement.setAttribute('data-theme', 'dark');
                 themeToggle.textContent = '☀️';
             }
 
-            // Initial render of the application
             renderApp();
         });
     </script>
